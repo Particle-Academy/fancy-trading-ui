@@ -183,3 +183,18 @@ export type TicketEstimate = {
     nextChangeAt?: number;
   };
 };
+
+/**
+ * The tick size in force AT a given price.
+ *
+ * Kalshi's `price_level_structure` gives different steps in different price
+ * ranges, so a scalar tick cannot express it (§2.8) — hence
+ * {@link TicketInstrument.tickSize} being `string | (price) => string`. This is
+ * the one place that difference is resolved, so no caller has to know which
+ * shape it was handed.
+ */
+export function tickSizeAt(instrument: TicketInstrument, price: string): string {
+  return typeof instrument.tickSize === "function"
+    ? instrument.tickSize(price)
+    : instrument.tickSize;
+}

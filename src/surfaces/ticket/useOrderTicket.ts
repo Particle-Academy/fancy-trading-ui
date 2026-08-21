@@ -22,7 +22,9 @@ import {
   type OrderIntent,
   approve,
   cmp,
+  formatDecimal,
   parseDecimal,
+  roundToTick,
   submittable,
 } from "@particle-academy/fancy-trading";
 import {
@@ -34,7 +36,7 @@ import {
 import { TRADING_WARNINGS, WarningRegistry, type WarningId } from "../../safety/warnings.ts";
 import { LIVE, oneClickVerdict, type Liveness, type TradingMode } from "../../safety/mode.ts";
 import { parsePrice } from "../../format.ts";
-import type { AttachedOrders, TicketEstimate, TicketInstrument, TicketValue } from "./types.ts";
+import { tickSizeAt, type AttachedOrders, type TicketEstimate, type TicketInstrument, type TicketValue } from "./types.ts";
 
 /** Top of book and a reference price, as strings. Optional — checks that cannot run say so. */
 export type TicketMarketContext = {
@@ -187,6 +189,27 @@ export function useOrderTicket(args: UseOrderTicketArgs): UseOrderTicketResult {
             detail: `A ${intent.side} limit here crosses the ${intent.side === "buy" ? "ask" : "bid"}. If that is what you want, a market order says so plainly.`,
           });
         }
+      }
+    }
+
+    // The instrument's tick grid, actually consulted. A price off the grid is
+    // one the venue will refuse, and `tickSize` sitting on the instrument being
+    // read by nothing is the shape of defect that never misbehaves because it
+    // never runs.
+    for (const [label, price] of [
+      ["Limit price", intent.limitPrice],
+      ["Trigger price", intent.triggerPrice],
+    ] as const) {
+      if (!price) continue;
+      const snapped = roundToTick(price, (p) =>
+        parseDecimal(tickSizeAt(instrument, formatDecimal(p)), instrument.priceExp),
+      );
+      if (cmp(snapped, price) !== 0) {
+        out.push({
+          id: TRADING_WARNINGS.PriceOffTick,
+          message: `${label} ${formatDecimal(price)} is not on this instrument's tick grid.`,
+          detail: `The nearest valid price is ${formatDecimal(snapped)}. Most venues refuse an off-tick order outright; some round it silently, which is worse.`,
+        });
       }
     }
 

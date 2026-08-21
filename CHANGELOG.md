@@ -73,6 +73,21 @@ in [`@particle-academy/fancy-trading`](https://www.npmjs.com/package/@particle-a
 
 ### Fixed
 
+- **`roundTrips()` priced an INVERSE contract with the linear formula.** It
+  hardcoded `contractType: "linear"` when calling the domain's `applyFill`, so a
+  coin-margined round trip reported a number nine orders of magnitude out — the
+  worked case in the test is `0.00181818 BTC` against `5000000.00`, and the
+  wrong one looks like a fortune. `RoundTripOptions.contractType` is now
+  **required with no default**, because there is no default that could be right;
+  `<FillsTable view="roundTrips">` says so where the number would have been
+  rather than guessing.
+- **`tickSize` was declared on `TicketInstrument` and read by nothing** — the
+  suite's most common defect shape, and invisible precisely because a field that
+  is never read never misbehaves. The ticket now warns when a typed limit or
+  trigger price is off the instrument's grid and names the nearest valid price.
+  It **warns rather than snapping**: a trader's number is not edited under them.
+  Ranged tick structures work, so Kalshi's `price_ranges` is expressible.
+  `tickSizeAt()` is exported for hosts and ladders.
 - **Three surfaces hand-rolled `<table>` markup that `react-fancy`'s `Table`
   already covers**, and the ladder had a bare `<button>`. Converted; no test
   changed, because `Table` forwards `onClick`, `onContextMenu`, `onMouseUp` and

@@ -268,6 +268,76 @@ describe("warnings fire in place, and can be silenced only there", () => {
   });
 });
 
+describe("the instrument's tick grid is actually used", () => {
+  test("a price off the tick grid warns, and names the nearest valid one", () => {
+    // ES trades in quarters. 5000.10 is not a price, and a venue will reject
+    // it. Before this, `tickSize` was declared on the instrument and read by
+    // nothing — the suite's most common defect shape, and invisible because a
+    // field that is never read never misbehaves.
+    const h = render(ticket({ value: { ...VALUE, limitPrice: "5000.10" } }));
+    const warning = h.find("[data-fancy-trading-warning='trading.price-off-tick']");
+    expect(warning).not.toBeNull();
+    // NEAREST, not next-up: 5000.10 is 0.10 from 5000.00 and 0.15 from 5000.25.
+    expect(warning!.textContent).toContain("5000.00");
+    h.unmount();
+  });
+
+  test("a price ON the grid does not warn", () => {
+    const h = render(ticket({ value: { ...VALUE, limitPrice: "5000.25" } }));
+    expect(h.find("[data-fancy-trading-warning='trading.price-off-tick']")).toBeNull();
+    h.unmount();
+  });
+
+  test("it warns rather than snapping — the trader's number is not edited under them", () => {
+    const onChange = vi.fn();
+    const onSubmit = vi.fn();
+    const h = render(ticket({ onChange, onSubmit, value: { ...VALUE, limitPrice: "5000.10" } }));
+    click(h.find("[data-fancy-trading-ticket-submit]"));
+    expect(onChange).not.toHaveBeenCalled();
+    expect(onSubmit.mock.calls[0]![0].limitPrice).toEqual({ v: 500010n, exp: 2 });
+    h.unmount();
+  });
+
+  test("a RANGED tick structure works too — Kalshi's price_ranges", () => {
+    // §2.8: "tickSize must be a function of price, not a scalar." Below 20c the
+    // grid is 1c; above it, 5c. A scalar cannot express that, and an event
+    // market whose ladder assumes one is wrong across half its range.
+    const kalshi: TicketInstrument = {
+      ...ES,
+      symbol: "PRES-26",
+      priceDisplay: { kind: "decimal", places: 2 },
+      tickSize: (price: string) => (Number(price) < 0.2 ? "0.01" : "0.05"),
+    };
+    const h = render(
+      ticket({
+        instrument: kalshi,
+        value: { ...VALUE, symbol: "PRES-26", limitPrice: "0.63" },
+      }),
+    );
+    const warning = h.find("[data-fancy-trading-warning='trading.price-off-tick']");
+    expect(warning).not.toBeNull();
+    expect(warning!.textContent).toContain("0.65");
+    h.unmount();
+  });
+
+  test("and the same instrument is happy at a price the OTHER range allows", () => {
+    const kalshi: TicketInstrument = {
+      ...ES,
+      symbol: "PRES-26",
+      priceDisplay: { kind: "decimal", places: 2 },
+      tickSize: (price: string) => (Number(price) < 0.2 ? "0.01" : "0.05"),
+    };
+    const h = render(
+      ticket({
+        instrument: kalshi,
+        value: { ...VALUE, symbol: "PRES-26", limitPrice: "0.13" },
+      }),
+    );
+    expect(h.find("[data-fancy-trading-warning='trading.price-off-tick']")).toBeNull();
+    h.unmount();
+  });
+});
+
 describe("degraded state stops the ticket, and says why", () => {
   test("submit is disabled while private state is stale", () => {
     const h = render(

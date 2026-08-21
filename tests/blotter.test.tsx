@@ -150,7 +150,7 @@ describe("round trips are grouped flat-to-flat, with the domain's own P&L", () =
       { id: "b", clientOrderId: "c2", symbol: "AAPL", side: "buy", qty: "100", price: "110.00", at: 2, execType: "trade" },
       { id: "c", clientOrderId: "c3", symbol: "AAPL", side: "sell", qty: "200", price: "120.00", at: 3, execType: "trade" },
     ];
-    const trips = roundTrips(fills, { basis: "fifo" });
+    const trips = roundTrips(fills, { contractType: "linear", basis: "fifo" });
     expect(trips.length).toBe(1);
     // 100 @ +20 and 100 @ +10 = 3000, whichever basis you use once flat.
     expect(trips[0]!.realised).toBe("3000.00");
@@ -164,16 +164,75 @@ describe("round trips are grouped flat-to-flat, with the domain's own P&L", () =
       { id: "x", clientOrderId: "c2", symbol: "AAPL", side: "buy", qty: "100", price: "110.00", at: 2, execType: "tradeCancel", correctsFillId: "b" },
       { id: "c", clientOrderId: "c3", symbol: "AAPL", side: "sell", qty: "100", price: "120.00", at: 3, execType: "trade" },
     ];
-    const trips = roundTrips(fills, { basis: "fifo" });
+    const trips = roundTrips(fills, { contractType: "linear", basis: "fifo" });
     expect(trips.length).toBe(1);
     expect(trips[0]!.realised).toBe("2000.00");
+  });
+
+  test("AN INVERSE CONTRACT IS NOT PRICED WITH THE LINEAR FORMULA", () => {
+    // §2.8: "Inverse contracts break the P&L formula outright… P&L is
+    // non-linear in price." A coin-margined contract settles in the BASE
+    // currency as contracts * multiplier * (1/entry - 1/exit).
+    //
+    // Buy 1000 at 50,000 and sell at 55,000:
+    //   inverse -> 0.00181818 BTC
+    //   linear  -> 5,000,000
+    // Nine orders of magnitude apart, and the wrong one looks like a fortune.
+    const fills: BlotterFill[] = [
+      { id: "a", clientOrderId: "c1", symbol: "BTC-PERP", side: "buy", qty: "1000", price: "50000", at: 1, execType: "trade" },
+      { id: "b", clientOrderId: "c2", symbol: "BTC-PERP", side: "sell", qty: "1000", price: "55000", at: 2, execType: "trade" },
+    ];
+
+    const inverse = roundTrips(fills, { contractType: "inverse", moneyExp: 8, basis: "fifo" });
+    expect(inverse[0]!.realised).toBe("0.00181818");
+
+    // The linear answer, asserted beside it as a fact about the WRONG version,
+    // so a regression cannot look like a rounding difference.
+    const linear = roundTrips(fills, { contractType: "linear", moneyExp: 2, basis: "fifo" });
+    expect(linear[0]!.realised).toBe("5000000.00");
+  });
+
+  test("the contract type is REQUIRED — there is no default that could be wrong", () => {
+    // Defaulting to "linear" is what produced the bug above: an inverse blotter
+    // silently reporting a linear number. `roundTrips` takes contractType as a
+    // required field, so the caller has to say which it is.
+    expect(roundTrips.length).toBe(2);
+    // @ts-expect-error contractType is required
+    expect(() => roundTrips([], { moneyExp: 2 })).toBeTypeOf("function");
+  });
+
+  test("<FillsTable> refuses to show round trips it cannot compute", () => {
+    // "A surface that is limited never silently renders less" (§3.2), applied
+    // to the surface's own arithmetic: without a contract type there is no
+    // correct number, so it says so where the number would have been rather
+    // than printing a plausible wrong one.
+    const fills: BlotterFill[] = [
+      { id: "a", clientOrderId: "c1", symbol: "BTC-PERP", side: "buy", qty: "1", price: "50000", at: 1, execType: "trade" },
+      { id: "b", clientOrderId: "c2", symbol: "BTC-PERP", side: "sell", qty: "1", price: "55000", at: 2, execType: "trade" },
+    ];
+    const h = render(<FillsTable mode="sim" fills={fills} view="roundTrips" />);
+    expect(h.find("[data-fancy-trading-roundtrips]")).toBeNull();
+    expect(h.text()).toContain("linear or inverse");
+    h.unmount();
+  });
+
+  test("and shows them once it is told", () => {
+    const fills: BlotterFill[] = [
+      { id: "a", clientOrderId: "c1", symbol: "AAPL", side: "buy", qty: "100", price: "100.00", at: 1, execType: "trade" },
+      { id: "b", clientOrderId: "c2", symbol: "AAPL", side: "sell", qty: "100", price: "110.00", at: 2, execType: "trade" },
+    ];
+    const h = render(
+      <FillsTable mode="sim" fills={fills} view="roundTrips" contractType="linear" />,
+    );
+    expect(h.find("[data-fancy-trading-roundtrip='AAPL']")!.textContent).toContain("1,000.00");
+    h.unmount();
   });
 
   test("an open position produces no round trip yet", () => {
     const fills: BlotterFill[] = [
       { id: "a", clientOrderId: "c1", symbol: "AAPL", side: "buy", qty: "100", price: "100.00", at: 1, execType: "trade" },
     ];
-    expect(roundTrips(fills)).toEqual([]);
+    expect(roundTrips(fills, { contractType: "linear" })).toEqual([]);
   });
 });
 

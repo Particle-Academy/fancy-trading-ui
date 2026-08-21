@@ -92,6 +92,7 @@ export {
   type UseOrderTicketResult,
 } from "./surfaces/ticket/useOrderTicket.ts";
 
+export { tickSizeAt } from "./surfaces/ticket/types.ts";
 export type {
   AttachedOrders,
   OrderType,
@@ -181,6 +182,7 @@ export {
   type OrderPresentation,
   type PresentedOrder,
   type RoundTrip,
+  type RoundTripOptions,
 } from "./surfaces/blotter/model.ts";
 
 // ─── Watchlist, alerts ───────────────────────────────────────────────────────

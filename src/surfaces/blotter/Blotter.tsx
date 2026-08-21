@@ -43,6 +43,7 @@ export {
   type OrderPresentation,
   type PresentedOrder,
   type RoundTrip,
+  type RoundTripOptions,
 } from "./model.ts";
 
 type Common = {
@@ -262,6 +263,14 @@ export type FillsTableProps = Common & {
   fills: readonly BlotterFill[];
   /** Show completed round trips instead of raw prints. */
   view?: "raw" | "roundTrips";
+  /**
+   * Required to show round trips, and there is no default.
+   *
+   * An inverse (coin-margined) contract's P&L is non-linear in price, so the
+   * linear formula does not merely round differently — it is wrong by orders of
+   * magnitude (§2.8). Without this the table says so instead of guessing.
+   */
+  contractType?: "linear" | "inverse" | "spot";
   multiplier?: string;
   moneyExp?: number;
   qtyExp?: number;
@@ -273,6 +282,7 @@ export function FillsTable({
   limitations,
   fills,
   view = "raw",
+  contractType,
   multiplier,
   moneyExp,
   qtyExp,
@@ -281,7 +291,10 @@ export function FillsTable({
   id,
 }: FillsTableProps) {
   const rows = reconcileFills(fills);
-  const trips = view === "roundTrips" ? roundTrips(fills, { multiplier, moneyExp, qtyExp }) : [];
+  const trips =
+    view === "roundTrips" && contractType
+      ? roundTrips(fills, { contractType, multiplier, moneyExp, qtyExp })
+      : [];
 
   return (
     <SurfaceChrome
@@ -293,7 +306,18 @@ export function FillsTable({
       className={className}
       title={view === "roundTrips" ? "Round trips" : "Fills"}
     >
-      {view === "roundTrips" ? (
+      {view === "roundTrips" && !contractType ? (
+        <Withheld
+          limitation={{
+            reason: "unsupported",
+            withheld: "Round-trip P&L",
+            detail:
+              "this table has not been told whether the contract is linear or inverse, and the two produce different numbers — an inverse contract is non-linear in price, so the linear formula is wrong rather than approximate.",
+            remedy: "Pass `contractType` from the instrument.",
+          }}
+          className="m-2"
+        />
+      ) : view === "roundTrips" ? (
         <Table data-fancy-trading-roundtrips="">
           <Table.Head>
             <Table.Row>

@@ -248,16 +248,43 @@ export type RoundTrip = {
   fillIds: string[];
 };
 
+export type RoundTripOptions = {
+  /**
+   * **Required, and deliberately un-defaulted.**
+   *
+   * §2.8: *"Inverse contracts break the P&L formula outright… P&L is non-linear
+   * in price."* A coin-margined contract settles in the BASE currency as
+   * `contracts * multiplier * (1/entry - 1/exit)`, and the linear formula gives
+   * an answer that is not merely imprecise but nine orders of magnitude out.
+   *
+   * This defaulted to `"linear"` in 0.1.0's first draft, which meant an inverse
+   * blotter reported a linear number and looked entirely plausible doing it.
+   * There is no safe default, so there is none.
+   */
+  contractType: "linear" | "inverse" | "spot";
+  /** A realised P&L without a stated method is meaningless (§2.4). Defaults to FIFO. */
+  basis?: "average" | "fifo" | "lifo";
+  /**
+   * Scale of the RESULT. For an inverse contract the result is in the base
+   * currency, so this wants coin precision (8 for BTC), not 2.
+   */
+  moneyExp?: number;
+  qtyExp?: number;
+  multiplier?: string;
+};
+
 /**
  * Group effective fills into completed round trips — flat to flat, per symbol.
  *
  * Professionals expect both the raw fills *and* this (§2.3). The realised P&L
  * is computed by the domain package's `applyFill`, not re-derived here, so a
- * blotter and a P&L report cannot disagree.
+ * blotter and a P&L report cannot disagree — and that is only true if the
+ * contract type reaches it, which is why {@link RoundTripOptions.contractType}
+ * has no default.
  */
 export function roundTrips(
   fills: readonly BlotterFill[],
-  options: { basis?: "average" | "fifo" | "lifo"; moneyExp?: number; qtyExp?: number; multiplier?: string } = {},
+  options: RoundTripOptions,
 ): RoundTrip[] {
   const basis = options.basis ?? "fifo";
   const moneyExp = options.moneyExp ?? 2;
@@ -301,7 +328,7 @@ export function roundTrips(
       ids.push(row.id);
 
       const result = applyFill(position, fill, {
-        contractType: "linear",
+        contractType: options.contractType,
         multiplier,
         moneyExp,
       });

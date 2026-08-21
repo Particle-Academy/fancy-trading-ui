@@ -225,6 +225,8 @@ export const TRADING_WARNINGS = {
   AtRiskLimit: "trading.at-risk-limit",
   /** A continuous futures symbol cannot be traded — it resolves to a contract. */
   ContinuousSymbol: "trading.continuous-symbol-not-tradable",
+  /** The typed price is not on the instrument's tick grid, so the venue will refuse it. */
+  PriceOffTick: "trading.price-off-tick",
 } as const;
 
 export type TradingWarningId = (typeof TRADING_WARNINGS)[keyof typeof TRADING_WARNINGS];
