@@ -1,0 +1,126 @@
+{
+  "name": "@particle-academy/fancy-trading-ui",
+  "version": "0.1.0",
+  "description": "Trading surfaces for the Fancy UI suite — order ticket, price ladder/DOM, book, depth, tape, blotter, positions, watchlist, alerts, and a session-aware trading chart on lightweight-charts. Controlled, agent-bridgeable, and built around a safety floor that a prop cannot switch off. Zero runtime dependencies.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Particle-Academy/fancy-trading-ui.git"
+  },
+  "homepage": "https://github.com/Particle-Academy/fancy-trading-ui#readme",
+  "bugs": "https://github.com/Particle-Academy/fancy-trading-ui/issues",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./chart": {
+      "import": {
+        "types": "./dist/chart.d.ts",
+        "default": "./dist/chart.js"
+      },
+      "require": {
+        "types": "./dist/chart.d.cts",
+        "default": "./dist/chart.cjs"
+      }
+    },
+    "./safety": {
+      "import": {
+        "types": "./dist/safety.d.ts",
+        "default": "./dist/safety.js"
+      },
+      "require": {
+        "types": "./dist/safety.d.cts",
+        "default": "./dist/safety.cjs"
+      }
+    },
+    "./styles.css": "./dist/styles.css",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "NOTICE",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "tsc --noEmit && eslint .",
+    "clean": "rm -rf dist",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run test && npm run lint && tsup"
+  },
+  "keywords": [
+    "trading",
+    "order-ticket",
+    "dom",
+    "price-ladder",
+    "order-book",
+    "candlestick",
+    "lightweight-charts",
+    "react",
+    "fancy",
+    "particle-academy"
+  ],
+  "peerDependencies": {
+    "@particle-academy/fancy-auto-common": ">=0.2 <2.0",
+    "@particle-academy/fancy-trading": ">=0.1 <2.0",
+    "@particle-academy/react-fancy": ">=5.20.0",
+    "lightweight-charts": ">=5.2 <6",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tailwindcss": "^4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@particle-academy/fancy-auto-common": {
+      "optional": true
+    },
+    "lightweight-charts": {
+      "optional": true
+    },
+    "tailwindcss": {
+      "optional": true
+    }
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@particle-academy/fancy-trading": "^0.1.0",
+    "@particle-academy/react-fancy": "^5.24.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "eslint": "^10.8.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "jsdom": "^29.1.1",
+    "lightweight-charts": "^5.2.1",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "tsup": "^8.5.0",
+    "typescript": "^5.8.0",
+    "typescript-eslint": "^8.65.0",
+    "vitest": "^3.2.7"
+  },
+  "overrides": {
+    "esbuild": "^0.28.1"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "MIT",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "engines": {
+    "node": ">=22"
+  }
+}

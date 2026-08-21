@@ -1,0 +1,35 @@
+@particle-academy/fancy-trading-ui
+Copyright (c) Particle Academy. Licensed under the MIT License.
+
+================================================================================
+THIRD-PARTY ATTRIBUTION — TradingView Lightweight Charts
+================================================================================
+
+The `@particle-academy/fancy-trading-ui/chart` entry point is built on
+TradingView's `lightweight-charts`, which is licensed under the Apache License,
+Version 2.0. Its NOTICE file is NOT shipped in the npm tarball, so the required
+attribution notice is reproduced here verbatim:
+
+TradingView Lightweight Charts™
+Copyright (с) 2025 TradingView, Inc. https://www.tradingview.com/
+
+--------------------------------------------------------------------------------
+
+THIS OBLIGATION PASSES THROUGH TO YOU.
+
+If you ship a commercial application that renders the chart, you must satisfy
+it in ONE of these two ways:
+
+  1. Leave the on-chart attribution logo enabled. `attributionLogo` defaults to
+     `true` on <TradingChart> and is passed straight through to the engine.
+     Doing nothing is the compliant path.
+
+  2. Or, if you turn it off, display the attribution notice above plus a link
+     to https://www.tradingview.com/ on a user-facing page of your website or
+     application.
+
+Consumers who never import `@particle-academy/fancy-trading-ui/chart` do not
+load `lightweight-charts` and this section does not apply to them.
+
+This is not legal advice. See LICENSE for the Apache-2.0 text as it applies to
+`lightweight-charts`, and https://github.com/tradingview/lightweight-charts.
