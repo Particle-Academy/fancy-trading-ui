@@ -19,7 +19,7 @@
 
 import { useMemo } from "react";
 import { formatDecimal, parseDecimal, add, sub } from "@particle-academy/fancy-trading";
-import { Badge } from "@particle-academy/react-fancy";
+import { Badge, Table } from "@particle-academy/react-fancy";
 import { SurfaceChrome, Withheld } from "../../chrome/SurfaceChrome.tsx";
 import type { Limitation } from "../../safety/limited.ts";
 import { LIVE, type Liveness, type TradingMode } from "../../safety/mode.ts";
@@ -174,30 +174,27 @@ export function TimeAndSales({
           className="p-2"
         />
       ) : (
-        <table data-fancy-trading-tape={instrument.symbol} className="w-full border-collapse text-xs tabular-nums">
-          <thead>
-            <tr>
-              <th scope="col" className="px-1 text-left font-medium text-secondary-500">time</th>
-              <th scope="col" className="px-1 text-right font-medium text-secondary-500">price</th>
-              <th scope="col" className="px-1 text-right font-medium text-secondary-500">size</th>
-              <th scope="col" className="px-1 text-left font-medium text-secondary-500">aggressor</th>
-              <th scope="col" className="px-1 text-left font-medium text-secondary-500">venue</th>
-              <th scope="col" className="px-1 text-left font-medium text-secondary-500">cond</th>
-            </tr>
-          </thead>
-          <tbody>
+        <Table data-fancy-trading-tape={instrument.symbol} className="text-xs tabular-nums">
+          <Table.Head>
+            <Table.Row>
+              {["time", "price", "size", "aggressor", "venue", "cond"].map((c) => (
+                <Table.Column key={c} scope="col" className="px-1 py-0.5 text-xs" label={c} />
+              ))}
+            </Table.Row>
+          </Table.Head>
+          <Table.Body>
             {rows.map((p) => {
               const enc = p.aggressor === "buy" ? buy : p.aggressor === "sell" ? sell : null;
               const inferred = p.aggressorSource === "inferred";
               return (
-                <tr
+                <Table.Row
                   key={p.id}
                   data-fancy-trading-tape-print={p.id}
                   data-aggressor={p.aggressor}
                   data-aggressor-source={p.aggressorSource}
                   className={inferred ? "opacity-70 [font-style:italic]" : undefined}
                 >
-                  <td className="px-1">
+                  <Table.Cell className="px-1 py-0.5 text-xs">
                     {new Date(p.at).toISOString().slice(11, 23)}
                     {showMicros ? (
                       <span
@@ -207,13 +204,13 @@ export function TimeAndSales({
                         {String(p.microseconds ?? 0).padStart(3, "0")}
                       </span>
                     ) : null}
-                  </td>
-                  <td className="px-1 text-right">
+                  </Table.Cell>
+                  <Table.Cell className="px-1 py-0.5 text-right text-xs">
                     {formatPrice(parseDecimal(p.price, instrument.priceExp), instrument.priceDisplay)}
-                  </td>
-                  <td className="px-1 text-right">{p.size}</td>
-                  <td
-                    className={`px-1 ${enc?.className ?? "text-secondary-500"}`}
+                  </Table.Cell>
+                  <Table.Cell className="px-1 py-0.5 text-right text-xs">{p.size}</Table.Cell>
+                  <Table.Cell
+                    className={`px-1 py-0.5 text-xs ${enc?.className ?? "text-secondary-500"}`}
                     title={
                       p.aggressor === "unknown"
                         ? "The aggressor side is not known for this print, and has not been guessed."
@@ -230,14 +227,14 @@ export function TimeAndSales({
                         {inferred ? " (inferred)" : ""}
                       </>
                     )}
-                  </td>
-                  <td className="px-1 text-secondary-500">{p.venue ?? ""}</td>
-                  <td className="px-1 text-secondary-500">{(p.conditions ?? []).join(" ")}</td>
-                </tr>
+                  </Table.Cell>
+                  <Table.Cell className="px-1 py-0.5 text-xs text-secondary-500">{p.venue ?? ""}</Table.Cell>
+                  <Table.Cell className="px-1 py-0.5 text-xs text-secondary-500">{(p.conditions ?? []).join(" ")}</Table.Cell>
+                </Table.Row>
               );
             })}
-          </tbody>
-        </table>
+          </Table.Body>
+        </Table>
       )}
 
       {delta.inferredPrints > 0 ? (

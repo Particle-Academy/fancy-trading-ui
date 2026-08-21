@@ -13,7 +13,7 @@
  */
 
 import { useMemo } from "react";
-import { Badge } from "@particle-academy/react-fancy";
+import { Badge, Table } from "@particle-academy/react-fancy";
 import { formatDecimal, parseDecimal } from "@particle-academy/fancy-trading";
 import { SurfaceChrome, Withheld } from "../../chrome/SurfaceChrome.tsx";
 import type { Limitation } from "../../safety/limited.ts";
@@ -165,34 +165,31 @@ function BookSide({
     );
   }
   return (
-    <table data-fancy-trading-book-side={side} className="w-full border-collapse">
-      <thead>
-        <tr>
-          <th scope="col" className={`px-1 text-right font-medium ${className}`}>
-            {label}
-          </th>
-          <th scope="col" className="px-1 text-right font-medium text-secondary-500">
-            size
-          </th>
-          <th scope="col" className="px-1 text-right font-medium text-secondary-500">
-            cumulative
-          </th>
-        </tr>
-      </thead>
-      <tbody>
+    <Table data-fancy-trading-book-side={side} className="text-xs">
+      <Table.Head>
+        <Table.Row>
+          <Table.Column scope="col" className={`px-1 text-right text-xs ${className}`} label={label} />
+          <Table.Column scope="col" className="px-1 text-right text-xs" label="size" />
+          <Table.Column scope="col" className="px-1 text-right text-xs" label="cumulative" />
+        </Table.Row>
+      </Table.Head>
+      <Table.Body>
         {points.map((p) => (
-          <tr key={p.price} data-fancy-trading-book-level={p.price} data-side={side}>
-            <td className={`px-1 text-right ${className}`}>
+          <Table.Row key={p.price} data-fancy-trading-book-level={p.price} data-side={side}>
+            <Table.Cell className={`px-1 py-0.5 text-right text-xs ${className}`}>
               {formatPrice(parseDecimal(p.price, instrument.priceExp), instrument.priceDisplay)}
-            </td>
-            <td className="px-1 text-right">{p.size}</td>
-            <td data-cumulative={p.cumulative} className="px-1 text-right text-secondary-500">
+            </Table.Cell>
+            <Table.Cell className="px-1 py-0.5 text-right text-xs">{p.size}</Table.Cell>
+            <Table.Cell
+              data-cumulative={p.cumulative}
+              className="px-1 py-0.5 text-right text-xs text-secondary-500"
+            >
               {p.cumulative}
-            </td>
-          </tr>
+            </Table.Cell>
+          </Table.Row>
         ))}
-      </tbody>
-    </table>
+      </Table.Body>
+    </Table>
   );
 }
 

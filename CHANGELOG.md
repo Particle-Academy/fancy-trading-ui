@@ -73,6 +73,13 @@ in [`@particle-academy/fancy-trading`](https://www.npmjs.com/package/@particle-a
 
 ### Fixed
 
+- **Three surfaces hand-rolled `<table>` markup that `react-fancy`'s `Table`
+  already covers**, and the ladder had a bare `<button>`. Converted; no test
+  changed, because `Table` forwards `onClick`, `onContextMenu`, `onMouseUp` and
+  every `data-*` onto the underlying `<tr>` / `<td>`. `tests/fancy-exclusive.test.ts`
+  now fails the build on a hand-rolled element the kit already has a primitive
+  for — the rule is easy to agree with and easy to break, because a `<table>` is
+  quicker to type than a `<Table>` and nothing complained.
 - **A session separator drawn in the same layer as the extended-hours shading is
   invisible against it.** Separators now render on their own layer with a halo
   stroke. Found by looking at a real browser render — jsdom has no canvas and

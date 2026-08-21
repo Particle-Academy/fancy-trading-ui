@@ -20,7 +20,7 @@
  */
 
 import { useMemo, useState } from "react";
-import { Callout } from "@particle-academy/react-fancy";
+import { Button, Callout, Table } from "@particle-academy/react-fancy";
 import { checkLimits, parseLimits, type JsonRiskLimits } from "../../safety/limits.ts";
 import { LIVE, oneClickVerdict, type Liveness, type TradingMode } from "../../safety/mode.ts";
 import type { Limitation } from "../../safety/limited.ts";
@@ -275,30 +275,33 @@ export function PriceLadder(props: PriceLadderProps) {
           </Callout>
         ) : null}
 
-        <table className="w-full border-collapse text-xs tabular-nums">
-          <thead>
-            <tr>
+        <Table className="text-xs tabular-nums">
+          <Table.Head>
+            <Table.Row>
               {COLUMNS.map((c) => (
-                <th key={c} scope="col" className="px-1 py-0.5 text-right font-medium text-secondary-500">
-                  {c === "buy" ? `${buyEnc.glyph} buy` : c === "sell" ? `${sellEnc.glyph} sell` : c}
-                </th>
+                <Table.Column
+                  key={c}
+                  scope="col"
+                  className="px-1 py-0.5 text-right text-xs"
+                  label={c === "buy" ? `${buyEnc.glyph} buy` : c === "sell" ? `${sellEnc.glyph} sell` : c}
+                />
               ))}
-            </tr>
-          </thead>
-          <tbody>
+            </Table.Row>
+          </Table.Head>
+          <Table.Body>
             {projected.map((r) => {
               const rowOrders = ordersByPrice.get(r.venuePrice) ?? [];
               const rowPending = pendingByPrice.get(r.venuePrice) ?? [];
               const isPositionRow = positionRow === r.venuePrice;
               return (
-                <tr
+                <Table.Row
                   key={r.displayPrice}
                   data-fancy-trading-ladder-row={r.displayPrice}
                   onMouseUp={() => dropOn(r.displayPrice)}
                   className="border-b border-secondary-100 dark:border-secondary-800"
                 >
                   {COLUMNS.map((column) => (
-                    <td
+                    <Table.Cell
                       key={column}
                       data-column={column}
                       aria-label={cellLabel(column, r.displayPrice)}
@@ -334,18 +337,18 @@ export function PriceLadder(props: PriceLadderProps) {
                           {rowOrders
                             .filter((o) => o.side === (column === "buy" ? "buy" : "sell"))
                             .map((o) => (
-                              <button
+                              <Button
                                 key={o.clientOrderId}
-                                type="button"
+                                size="xs"
                                 data-fancy-trading-ladder-order={o.clientOrderId}
                                 data-pending={o.pendingStatus ?? ""}
                                 title={`${o.side} ${o.qty} at ${o.price}${o.pendingStatus ? ` — ${o.pendingStatus}, not confirmed` : ""}`}
                                 onMouseDown={() => beginDrag(o)}
                                 onClick={(e) => e.stopPropagation()}
-                                className="rounded bg-secondary-800 px-1 text-white dark:bg-secondary-200 dark:text-secondary-900"
+                                className="rounded px-1 py-0 text-xs leading-4"
                               >
                                 {o.qty}
-                              </button>
+                              </Button>
                             ))}
                           {rowPending
                             .filter((o) => o.side === (column === "buy" ? "buy" : "sell"))
@@ -361,13 +364,13 @@ export function PriceLadder(props: PriceLadderProps) {
                             ))}
                         </span>
                       )}
-                    </td>
+                    </Table.Cell>
                   ))}
-                </tr>
+                </Table.Row>
               );
             })}
-          </tbody>
-        </table>
+          </Table.Body>
+        </Table>
       </div>
     </SurfaceChrome>
   );
