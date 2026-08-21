@@ -1,0 +1,87 @@
+/**
+ * @particle-academy/fancy-trading-ui — the small amount of CSS that Tailwind
+ * utilities cannot express.
+ *
+ * Everything else is Tailwind v4 classes on `react-fancy` primitives. Import
+ * this alongside react-fancy's own stylesheet:
+ *
+ *   @import "tailwindcss";
+ *   @source "../node_modules/@particle-academy/react-fancy/dist/**\/*.js";
+ *   @source "../node_modules/@particle-academy/fancy-trading-ui/dist/**\/*.js";
+ *
+ *   import "@particle-academy/react-fancy/styles.css";
+ *   import "@particle-academy/fancy-trading-ui/styles.css";
+ *
+ * NOTE ON THE MODE MARKER. `[data-fancy-trading-mode]` is styled with inline
+ * `!important` declarations from JavaScript and CANNOT be overridden from here
+ * or from your stylesheet. That is deliberate: trading live while believing you
+ * are in simulation is the failure that ends accounts, so the marker is not a
+ * theming surface. Everything else in this package is.
+ */
+
+/* A ladder and a tape are read as columns of digits. Proportional figures make
+   a price column impossible to scan, and the misreads are silent. */
+[data-fancy-trading-ladder] td,
+[data-fancy-trading-tape] td,
+[data-fancy-trading-book] td,
+[data-fancy-trading-depth] {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Nothing moves between renders. Density is what MAKES a fixed layout possible
+   — if everything is simultaneously visible, nothing has to move — and spatial
+   constancy is what the density is actually buying (plan section 12.1). It is
+   also a Human+ property: an agent addressing stable handles benefits from
+   exactly the invariant a trader's muscle memory does. */
+[data-fancy-trading-ladder] table {
+  table-layout: fixed;
+}
+
+/* A cell you can act on should say so before you click it. */
+[data-fancy-trading-ladder] td[data-column="buy"],
+[data-fancy-trading-ladder] td[data-column="sell"] {
+  cursor: pointer;
+}
+
+/* One-click off is a STATE, not a disabled attribute on every cell — so it is
+   expressed once, on the surface, and read by CSS, by tests and by the bridge. */
+[data-fancy-trading-surface][data-oneclick="off"] [data-fancy-trading-ladder] td[data-column="buy"],
+[data-fancy-trading-surface][data-oneclick="off"] [data-fancy-trading-ladder] td[data-column="sell"] {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* An inferred aggressor side is rendered in italics as well as in a lighter
+   tone, because colour alone fails for roughly 1 in 12 men (section 12.7) and a
+   tape that presents inference as fact is lying to the trader (section 2.3). */
+[data-fancy-trading-tape-print][data-aggressor-source="inferred"] {
+  font-style: italic;
+}
+
+/* A working order carrying an unconfirmed change is drawn at its CONFIRMED
+   price with the request as a ghost. Never the other way round: a replace can
+   be rejected while the ORIGINAL fills. */
+[data-fancy-trading-ladder-pending] {
+  font-style: italic;
+}
+
+/* Margin cushion, as background on the row you are already looking at — IBKR's
+   design, and the right place for it. The badge beside it carries the words, so
+   this is never the only encoding. */
+[data-fancy-trading-position][data-cushion="warning"] {
+  background-color: rgb(250 204 21 / 0.12);
+}
+[data-fancy-trading-position][data-cushion="depleted"] {
+  background-color: rgb(249 115 22 / 0.16);
+}
+[data-fancy-trading-position][data-cushion="liquidationImminent"] {
+  background-color: rgb(239 68 68 / 0.18);
+}
+
+/* The chart's container must have a height before lightweight-charts measures
+   it, or it initialises at zero and never recovers. */
+[data-fancy-trading-chart] {
+  position: relative;
+  width: 100%;
+  min-height: 160px;
+}

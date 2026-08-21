@@ -17,7 +17,9 @@ import { defineConfig } from "tsup";
 export default defineConfig({
   entry: ["src/index.ts", "src/chart.ts", "src/safety.ts", "src/styles.css"],
   format: ["esm", "cjs"],
-  dts: true,
+  // Explicit dts entries: the CSS file is a build input but not a TypeScript
+  // one, and tsup otherwise hands it to tsc, which refuses the extension.
+  dts: { entry: ["src/index.ts", "src/chart.ts", "src/safety.ts"] },
   sourcemap: true,
   clean: true,
   external: [

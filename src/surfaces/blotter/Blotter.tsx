@@ -26,7 +26,7 @@ import {
   type BlotterFill,
   type BlotterOrder,
   type BlotterPosition,
-} from "./blotter.ts";
+} from "./model.ts";
 
 export {
   CUSHION_LABEL,
@@ -43,7 +43,7 @@ export {
   type OrderPresentation,
   type PresentedOrder,
   type RoundTrip,
-} from "./blotter.ts";
+} from "./model.ts";
 
 type Common = {
   mode: TradingMode;
