@@ -10,7 +10,7 @@ one. Every breaking entry says what you have to DO, not just what moved.
 
 ## [Unreleased]
 
-## [0.1.0] — unreleased
+## [0.1.0] — 2026-08-21
 
 First release. Trading surfaces for the Fancy UI suite, built on the domain core
 in [`@particle-academy/fancy-trading`](https://www.npmjs.com/package/@particle-academy/fancy-trading).
