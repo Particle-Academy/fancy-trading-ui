@@ -1,0 +1,11 @@
+# Every path in this repository is owned by the project owner.
+#
+# Paired with the "main protection" branch ruleset, which stops the default
+# branch being deleted or force-pushed and requires CI to be green. Outside
+# contributions arrive as pull requests that a code owner is requested to
+# review, and agents cannot approve on the owner's behalf.
+#
+# Repository admins bypass the ruleset, so day-to-day direct pushes by the
+# owner are unaffected.
+
+* @wishborn
