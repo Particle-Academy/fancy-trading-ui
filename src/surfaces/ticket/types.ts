@@ -117,6 +117,28 @@ export type TicketInstrument = {
   minQty?: string;
   priceBounds?: { min: string; max: string } | null;
   currency?: string;
+  /**
+   * How the venue models the two sides of an outcome contract. Absent for
+   * everything that is not an event / prediction market.
+   *
+   * This is the single most important field for event markets, and getting it
+   * wrong is unfixable later (§2.8):
+   *
+   * - **`netted_complementary`** (Kalshi) — ONE book with two mirrored frames.
+   *   Binary contracts sum to $1.00, so a NO bid at X *is* a YES ask at
+   *   1.00 - X, and buying NO is literally the same order as selling YES.
+   * - **`separate_per_outcome`** (Polymarket) — YES and NO are separate tokens
+   *   with SEPARATE order books, separate resting liquidity and separate queue
+   *   position. Economically equivalent, operationally different. Mirroring one
+   *   into the other would invent liquidity that is not there.
+   */
+  outcomeFrame?: {
+    model: "netted_complementary" | "separate_per_outcome";
+    /** What the two sides sum to. `"1.00"` for a binary contract. */
+    sumsTo?: string;
+    /** The name of the complementary frame, e.g. `"NO"`. */
+    complementOf?: string;
+  } | null;
 };
 
 /**

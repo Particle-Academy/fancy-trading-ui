@@ -76,3 +76,18 @@ export function type(el: Element | null, value: string): void {
     input.dispatchEvent(new Event("input", { bubbles: true }));
   });
 }
+
+/** Mouse-down / mouse-up, for the ladder's drag-to-move gesture. */
+export function mouseDown(el: Element | null): void {
+  if (!el) throw new Error("mouseDown(): element not found");
+  act(() => {
+    el.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, cancelable: true }));
+  });
+}
+
+export function mouseUp(el: Element | null): void {
+  if (!el) throw new Error("mouseUp(): element not found");
+  act(() => {
+    el.dispatchEvent(new MouseEvent("mouseup", { bubbles: true, cancelable: true }));
+  });
+}
