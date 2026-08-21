@@ -95,6 +95,7 @@ export {
 
 export {
   DARK_THEME,
+  DECORATION_LAYERS,
   LIGHT_THEME,
   NO_DECORATIONS,
   createChartEngine,

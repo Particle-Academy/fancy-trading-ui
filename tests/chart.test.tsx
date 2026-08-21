@@ -15,6 +15,7 @@ import { join } from "node:path";
 import {
   CME_EQUITY_INDEX_EST,
   CRYPTO_24_7,
+  DECORATION_LAYERS,
   TradingChart,
   US_EQUITIES_EST,
   applyTick,
@@ -381,6 +382,25 @@ describe("attribution", () => {
     expect(notice).toContain("Copyright (с) 2025 TradingView, Inc.");
     expect(notice).toContain("https://www.tradingview.com/");
     expect(notice.includes("Copyright (c) 2025 TradingView")).toBe(false);
+  });
+});
+
+describe("a session separator is drawn ABOVE the shading", () => {
+  test("the separator layer is not the shading layer", () => {
+    // Regression tripwire. Drawn in the same `bottom` layer, a dashed grey
+    // separator over an extended-hours block is technically drawn and
+    // practically invisible — which is exactly the failure §2.7.2 exists to
+    // prevent. Caught by looking at a real render in a browser; jsdom has no
+    // canvas and could never have caught it, so this pins the DECISION instead.
+    expect(DECORATION_LAYERS.sessionSeparator).not.toBe(DECORATION_LAYERS.extendedHours);
+    expect(DECORATION_LAYERS.sessionSeparator).toBe("normal");
+  });
+
+  test("the shading and the halt bands stay behind the candles", () => {
+    // The other half: shading in front of the candles would hide the thing the
+    // chart is for.
+    expect(DECORATION_LAYERS.extendedHours).toBe("bottom");
+    expect(DECORATION_LAYERS.haltBand).toBe("bottom");
   });
 });
 

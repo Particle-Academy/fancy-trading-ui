@@ -53,6 +53,31 @@ in [`@particle-academy/fancy-trading`](https://www.npmjs.com/package/@particle-a
 - Activity broadcasting for every mutation, through an optional
   `fancy-auto-common` emitter.
 
+- **`<TradingChart>`** on `@particle-academy/fancy-trading-ui/chart` — the only
+  entry point that touches `lightweight-charts`. Session-aware axis with
+  separators, extended-hours shading and halts drawn as annotated bands;
+  windowing; a controlled drawing model; and Group A primitives (volume profile,
+  depth heatmap) rendered into the candles' own coordinate space.
+  - `sessionKey()` knows the **futures day starts at 18:00 ET**, so a 19:00 bar
+    on Monday belongs to Tuesday's session.
+  - `applyTick()` never interpolates across a session break.
+  - A profile computed from OHLCV is labelled `approximate`, because OHLCV
+    records where price went, not where the volume happened inside the bar.
+  - In an environment with no 2D canvas — SSR, jsdom — the chart renders a
+    limitation notice instead of throwing.
+- **The agent-bridge contract** (`surfaceSnapshot`, `surfaceCapabilities`,
+  `proposeAction`). Every snapshot carries mode, liveness and limitations in the
+  same words a human reads; every mutation is a proposal; there is no `execute`.
+  Capability discovery answers "what can I do from here", which the study found
+  to be a real gap in agent affordances.
+
+### Fixed
+
+- **A session separator drawn in the same layer as the extended-hours shading is
+  invisible against it.** Separators now render on their own layer with a halo
+  stroke. Found by looking at a real browser render — jsdom has no canvas and
+  could never have caught it — so `DECORATION_LAYERS` pins the decision instead.
+
 ### Third-party
 
 - `lightweight-charts` is an **optional peer dependency**, never bundled, and

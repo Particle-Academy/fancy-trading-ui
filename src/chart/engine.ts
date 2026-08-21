@@ -65,6 +65,25 @@ export const NO_DECORATIONS: SessionDecorations = { separators: [], extended: []
  */
 type RenderTarget = Parameters<IPrimitivePaneRenderer["draw"]>[0];
 
+/**
+ * Which visual layer each session decoration is drawn on.
+ *
+ * The separator being on a DIFFERENT layer from the shading is a fix, not a
+ * detail. Drawn in the same `bottom` layer, a dashed grey separator over an
+ * extended-hours block is technically drawn and practically invisible — which
+ * is exactly the failure §2.7.2 exists to prevent: *"do not collapse it
+ * SILENTLY — session boundaries get a visible separator, because gaps across a
+ * break carry information."*
+ *
+ * Found by looking at a real render in a browser, not by reading the code. The
+ * test on this constant is the tripwire against it being moved back.
+ */
+export const DECORATION_LAYERS = {
+  extendedHours: "bottom",
+  haltBand: "bottom",
+  sessionSeparator: "normal",
+} as const;
+
 export type ChartTheme = {
   background: string;
   text: string;
@@ -86,7 +105,7 @@ export const LIGHT_THEME: ChartTheme = {
   up: "#16a34a",
   down: "#dc2626",
   extended: "rgba(113,113,122,0.10)",
-  separator: "rgba(113,113,122,0.55)",
+  separator: "rgba(63,63,70,0.85)",
   band: "rgba(217,119,6,0.18)",
   profile: "rgba(59,130,246,0.35)",
   heat: "59,130,246",
@@ -99,7 +118,7 @@ export const DARK_THEME: ChartTheme = {
   up: "#22c55e",
   down: "#ef4444",
   extended: "rgba(161,161,170,0.12)",
-  separator: "rgba(161,161,170,0.55)",
+  separator: "rgba(212,212,216,0.85)",
   band: "rgba(245,158,11,0.20)",
   profile: "rgba(96,165,250,0.35)",
   heat: "96,165,250",
@@ -297,11 +316,21 @@ abstract class Primitive implements ISeriesPrimitive<Time> {
     protected readonly getTheme: () => ChartTheme,
     zOrder: "bottom" | "normal" | "top",
   ) {
-    this.view = {
+    this.view = this.makeView(zOrder, (target) => this.draw(target));
+  }
+
+  /**
+   * A pane view at one z-order. Exposed so a primitive can publish MORE than
+   * one — the session decorations need to, because shading belongs behind the
+   * candles and a separator drawn behind the shading is invisible.
+   */
+  protected makeView(
+    zOrder: "bottom" | "normal" | "top",
+    draw: (target: RenderTarget) => void,
+  ): IPrimitivePaneView {
+    return {
       zOrder: () => zOrder,
-      renderer: (): IPrimitivePaneRenderer => ({
-        draw: (target) => this.draw(target),
-      }),
+      renderer: (): IPrimitivePaneRenderer => ({ draw }),
     };
   }
 
@@ -347,9 +376,22 @@ abstract class Primitive implements ISeriesPrimitive<Time> {
  */
 class DecorationsPrimitive extends Primitive {
   private decorations: SessionDecorations = NO_DECORATIONS;
+  private readonly separatorView: IPrimitivePaneView;
 
   constructor(getTheme: () => ChartTheme) {
-    super(getTheme, "bottom");
+    super(getTheme, DECORATION_LAYERS.extendedHours);
+    // Separators sit ABOVE the shading. Drawn in the same bottom layer they
+    // were invisible against an extended-hours block, which is the exact
+    // failure the rule exists to prevent: "do not collapse non-session time
+    // SILENTLY" (section 2.7.2). Found by looking at a real render, not by
+    // reading the code.
+    this.separatorView = this.makeView(DECORATION_LAYERS.sessionSeparator, (target) =>
+      this.drawSeparators(target),
+    );
+  }
+
+  override paneViews(): readonly IPrimitivePaneView[] {
+    return [this.view, this.separatorView];
   }
 
   get bands(): readonly ChartBand[] {
@@ -388,18 +430,43 @@ class DecorationsPrimitive extends Primitive {
         context.fillText(band.label, x1 + 4, 14);
       }
 
-      context.strokeStyle = theme.separator;
-      context.lineWidth = 1;
-      context.setLineDash([3, 3]);
+    });
+  }
+
+  /**
+   * The session separator, on its own layer.
+   *
+   * Two strokes: a light halo and the line itself, so it reads against both the
+   * page background and an extended-hours block. A single grey dash on grey
+   * shading is technically drawn and practically absent.
+   */
+  private drawSeparators(target: RenderTarget): void {
+    if (this.decorations.separators.length === 0) return;
+    const theme = this.getTheme();
+    target.useMediaCoordinateSpace(({ context, mediaSize }) => {
       for (const time of this.decorations.separators) {
         const x = this.x(time);
         if (x === null) continue;
+
+        context.save();
+        context.strokeStyle = theme.background;
+        context.globalAlpha = 0.9;
+        context.lineWidth = 3;
         context.beginPath();
         context.moveTo(x, 0);
         context.lineTo(x, mediaSize.height);
         context.stroke();
+
+        context.globalAlpha = 1;
+        context.strokeStyle = theme.separator;
+        context.lineWidth = 1;
+        context.setLineDash([4, 3]);
+        context.beginPath();
+        context.moveTo(x, 0);
+        context.lineTo(x, mediaSize.height);
+        context.stroke();
+        context.restore();
       }
-      context.setLineDash([]);
     });
   }
 }
