@@ -214,6 +214,8 @@ describe("risk limits gate the submit and name what stopped it", () => {
     const button = h.find("[data-fancy-trading-ticket-submit]") as HTMLButtonElement;
     expect(button.disabled).toBe(true);
     expect(h.text().toLowerCase()).toContain("per-order limit");
+    // The handle reaches the DOM — it was on a Callout, which drops it.
+    expect(h.find("[data-fancy-trading-ticket-blocked]")).not.toBeNull();
     click(button);
     expect(onSubmit).not.toHaveBeenCalled();
     h.unmount();

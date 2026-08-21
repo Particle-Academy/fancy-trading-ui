@@ -209,6 +209,7 @@ describe("working orders render at their CONFIRMED price", () => {
     mouseDown(h.find('[data-fancy-trading-ladder-order="o-1"]'));
     mouseUp(h.find('[data-fancy-trading-ladder-row="5000.50"]'));
     expect(h.text().toLowerCase()).toContain("already");
+    expect(h.find("[data-fancy-trading-ladder-refusal]")).not.toBeNull();
     h.unmount();
   });
 });

@@ -270,9 +270,11 @@ export function PriceLadder(props: PriceLadderProps) {
         ) : null}
 
         {refusal ? (
-          <Callout data-fancy-trading-ladder-refusal="" color="red" className="m-2">
-            <p className="text-sm">{refusal}</p>
-          </Callout>
+          <div data-fancy-trading-ladder-refusal="" className="m-2">
+            <Callout color="red">
+              <p className="text-sm">{refusal}</p>
+            </Callout>
+          </div>
         ) : null}
 
         <Table className="text-xs tabular-nums">

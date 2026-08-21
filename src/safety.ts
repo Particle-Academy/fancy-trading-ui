@@ -60,3 +60,16 @@ export {
   type Limitation,
   type LimitationReason,
 } from "./safety/limited.ts";
+
+export {
+  describeBreak,
+  findUnknownFate,
+  reconcileOrder,
+  reconcilePositions,
+  reconciliationVerdict,
+  type ReconciliationBreak,
+  type ReconciliationScales,
+  type ReconciliationVerdict,
+  type VenueOrderState,
+  type VenuePosition,
+} from "./safety/reconciliation.ts";

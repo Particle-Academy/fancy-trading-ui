@@ -156,6 +156,19 @@ describe("liveness is visible, and one-click follows it", () => {
     h.unmount();
   });
 
+  test("the degradation notice's handle actually reaches the DOM", () => {
+    // It did not, for a while: it was a `data-*` on a Callout, which drops
+    // unknown props. A stable handle that no selector can find is not a handle,
+    // and an agent addressing it would have found nothing.
+    const h = render(
+      <SurfaceChrome surface="blotter" mode="live" liveness={{ state: "stale" }}>
+        <p>orders</p>
+      </SurfaceChrome>,
+    );
+    expect(h.find("[data-fancy-trading-degraded='stale']")).not.toBeNull();
+    h.unmount();
+  });
+
   test("resyncing is degraded too — a book being repaired is not a book", () => {
     const h = render(
       <SurfaceChrome surface="book" mode="live" liveness={{ state: "resyncing" }}>

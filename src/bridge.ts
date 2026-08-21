@@ -26,6 +26,11 @@
 import type { TradingActivityEvent, TradingSurface } from "./activity.ts";
 import { livenessSummary, oneClickVerdict, type Liveness, type TradingMode } from "./safety/mode.ts";
 import { limitationSummary, type Limitation } from "./safety/limited.ts";
+import {
+  describeBreak,
+  reconciliationVerdict,
+  type ReconciliationBreak,
+} from "./safety/reconciliation.ts";
 
 export type AgentLimitation = {
   reason: string;
@@ -49,6 +54,12 @@ export type TradingSurfaceSnapshot<TData = unknown> = {
   actionable: { allowed: boolean; reason: string | null };
   /** What this surface cannot currently show, and why. Never omitted silently. */
   limitations: AgentLimitation[];
+  /**
+   * Disagreements between this client and the venue (§2.6), as the SAME
+   * sentences a human reads. Empty rather than absent when there are none, so
+   * "no breaks" and "this bridge does not report breaks" cannot be confused.
+   */
+  breaks: string[];
   /** Surface-specific state — the ladder's rows, the ticket's value, and so on. */
   data: TData;
   /** When the snapshot was taken. */
@@ -112,12 +123,15 @@ export function surfaceSnapshot<TData>(input: {
   mode: TradingMode;
   liveness: Liveness;
   limitations?: readonly Limitation[];
+  /** §2.6 breaks. A break makes the surface non-actionable on its own. */
+  breaks?: readonly ReconciliationBreak[];
   data: TData;
   at?: number;
   /** An extra reason the surface is not actionable, beyond liveness. */
   blockedReason?: string | null;
 }): TradingSurfaceSnapshot<TData> {
   const verdict = oneClickVerdict(input.liveness, input.mode);
+  const reconciled = reconciliationVerdict(input.breaks ?? []);
   const blocked = input.blockedReason ?? null;
   return {
     surface: input.surface,
@@ -126,13 +140,17 @@ export function surfaceSnapshot<TData>(input: {
     liveness: input.liveness,
     livenessSummary: livenessSummary(input.liveness),
     actionable: {
-      allowed: verdict.allowed && blocked === null,
-      reason: blocked ?? verdict.reason,
+      // A break outranks staleness in the REASON, because a live-and-wrong
+      // surface is the one an agent is most likely to act on: nothing about it
+      // looks broken.
+      allowed: verdict.allowed && reconciled.allowed && blocked === null,
+      reason: reconciled.reason ?? blocked ?? verdict.reason,
     },
     limitations: (input.limitations ?? []).map((l) => ({
       reason: String(l.reason),
       summary: limitationSummary(l),
     })),
+    breaks: (input.breaks ?? []).map(describeBreak),
     data: input.data,
     at: input.at ?? Date.now(),
   };

@@ -339,15 +339,17 @@ export function OrderTicket(props: OrderTicketProps) {
         ) : null}
 
         {ticket.blockedReason ? (
-          <Callout data-fancy-trading-ticket-blocked="" color="red">
-            <p className="text-sm">{ticket.blockedReason}</p>
-            {ticket.verdict?.unevaluated.length ? (
-              <p className="mt-1 text-xs opacity-80">
-                Not checked, for want of the data to check them:{" "}
-                {ticket.verdict.unevaluated.join(", ")}.
-              </p>
-            ) : null}
-          </Callout>
+          <div data-fancy-trading-ticket-blocked="">
+            <Callout color="red">
+              <p className="text-sm">{ticket.blockedReason}</p>
+              {ticket.verdict?.unevaluated.length ? (
+                <p className="mt-1 text-xs opacity-80">
+                  Not checked, for want of the data to check them:{" "}
+                  {ticket.verdict.unevaluated.join(", ")}.
+                </p>
+              ) : null}
+            </Callout>
+          </div>
         ) : ticket.verdict?.unevaluated.length ? (
           <p className="text-xs text-secondary-500">
             Limits not checked, for want of the data to check them:{" "}

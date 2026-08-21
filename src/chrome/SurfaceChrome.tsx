@@ -19,6 +19,11 @@ import { Badge, Callout } from "@particle-academy/react-fancy";
 import type { TradingSurface } from "../activity.ts";
 import { LIVE, livenessSummary, oneClickVerdict, type Liveness, type TradingMode } from "../safety/mode.ts";
 import { limitationSummary, type Limitation } from "../safety/limited.ts";
+import {
+  describeBreak,
+  reconciliationVerdict,
+  type ReconciliationBreak,
+} from "../safety/reconciliation.ts";
 import { ModeMarker, assertMode } from "./ModeMarker.tsx";
 
 export type SurfaceChromeProps = {
@@ -36,6 +41,14 @@ export type SurfaceChromeProps = {
   liveness?: Liveness;
   /** What this surface cannot show right now, and why. */
   limitations?: readonly Limitation[];
+  /**
+   * Disagreements between this client and the venue (§2.6).
+   *
+   * A break turns one-click off even when the feed is live: staleness and
+   * wrongness are different problems, and the live-and-wrong case is the more
+   * dangerous because nothing looks broken.
+   */
+  breaks?: readonly ReconciliationBreak[];
   id?: string;
   title?: ReactNode;
   /** Right-hand header slot. */
@@ -51,6 +64,7 @@ export function SurfaceChrome({
   mode,
   liveness = LIVE,
   limitations,
+  breaks,
   id,
   title,
   actions,
@@ -61,7 +75,9 @@ export function SurfaceChrome({
   assertMode(mode);
 
   const oneClick = oneClickVerdict(liveness, mode);
+  const reconciled = reconciliationVerdict(breaks ?? []);
   const degraded = liveness.state !== "live";
+  const actionable = oneClick.allowed && reconciled.allowed;
 
   return (
     <section
@@ -69,7 +85,8 @@ export function SurfaceChrome({
       data-fancy-trading-surface={surface}
       data-mode={mode}
       data-liveness={liveness.state}
-      data-oneclick={oneClick.allowed ? "on" : "off"}
+      data-oneclick={actionable ? "on" : "off"}
+      data-reconciliation={reconciled.allowed ? "ok" : "break"}
       className={className}
     >
       <header
@@ -99,13 +116,37 @@ export function SurfaceChrome({
       </header>
 
       <div data-fancy-trading-body="" className={bodyClassName}>
+        {/*
+          The break goes FIRST and in red. It outranks staleness: a stale
+          surface is out of date, a broken one is wrong, and only the second can
+          be wrong while looking perfectly healthy.
+        */}
+        {(breaks ?? []).map((candidate, i) => (
+          // Wrapped, not passed through: `Callout` does not forward unknown
+          // props, and TypeScript does not complain because a hyphenated JSX
+          // attribute is always allowed and never checked. Accepted silently
+          // and dropped silently is the worst pair, so the handle goes on an
+          // element that keeps it. Filed against react-fancy.
+          <div key={`${candidate.kind}-${i}`} data-fancy-trading-break={candidate.kind} className="m-2">
+            <Callout color="red">
+              <p className="text-sm font-medium">{describeBreak(candidate)}</p>
+            </Callout>
+          </div>
+        ))}
+
+        {!reconciled.allowed && reconciled.reason ? (
+          <p className="mx-2 text-xs text-red-700 dark:text-red-400">{reconciled.reason}</p>
+        ) : null}
+
         {degraded && (
-          <Callout data-fancy-trading-degraded={liveness.state} color="amber" className="m-2">
-            <p className="text-sm">{livenessSummary(liveness)}</p>
-            {!oneClick.allowed && oneClick.reason ? (
-              <p className="mt-1 text-xs opacity-80">{oneClick.reason}</p>
-            ) : null}
-          </Callout>
+          <div data-fancy-trading-degraded={liveness.state} className="m-2">
+            <Callout color="amber">
+              <p className="text-sm">{livenessSummary(liveness)}</p>
+              {!oneClick.allowed && oneClick.reason ? (
+                <p className="mt-1 text-xs opacity-80">{oneClick.reason}</p>
+              ) : null}
+            </Callout>
+          </div>
         )}
 
         {limitations?.map((limitation, i) => (

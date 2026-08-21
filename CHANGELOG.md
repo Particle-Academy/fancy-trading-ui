@@ -10,6 +10,39 @@ one. Every breaking entry says what you have to DO, not just what moved.
 
 ## [Unreleased]
 
+### Added
+
+- **Reconciliation breaks (§2.6), on the `/safety` entry point.**
+  `reconcilePositions()` recomputes positions from this client's own fills and
+  compares them with what the venue reports; `reconcileOrder()` compares one
+  order's cumulative state, delegating the predicate to the domain's
+  `isReconciliationBreak()` so a blotter and a risk daemon cannot disagree about
+  what counts as a break; `findUnknownFate()` surfaces `pendingNew` orders the
+  venue does not report.
+  - **A break turns one-click off even when the feed is perfectly live.**
+    Staleness and wrongness are different problems and only one of them is about
+    the socket — the live-and-wrong case is the more dangerous, because nothing
+    looks broken. `<SurfaceChrome breaks={…}>` renders it in red, in the body,
+    above the staleness notice, and sets `data-reconciliation="break"`.
+  - **The venue is authoritative, and the sentence says so.** Both numbers and
+    the difference are on screen, because a surface showing only its own number
+    cannot be argued with.
+  - **An order of unknown fate is never guessed.** It may have been rejected, or
+    accepted with the ack lost; it is surfaced as needing a human and is neither
+    cancelled nor working until one checks.
+  - Snapshots carry `breaks` as the same sentences a human reads, and are not
+    actionable while one stands.
+
+### Fixed
+
+- **Four stable handles were going nowhere.** `data-*` on `react-fancy`'s
+  `Callout` is dropped — it destructures its props and does not spread the rest
+  — and TypeScript does not object, because a hyphenated JSX attribute is always
+  allowed and never checked. `-break`, `-degraded`, `-ladder-refusal` and
+  `-ticket-blocked` were all accepted silently and dropped silently. The handles
+  now sit on a wrapper, and a scanner fails the build on the next one.
+  **Filed against `react-fancy`**, since every other primitive forwards.
+
 ## [0.1.0] — 2026-08-21
 
 First release. Trading surfaces for the Fancy UI suite, built on the domain core
