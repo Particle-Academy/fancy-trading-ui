@@ -50,6 +50,7 @@ export {
   CME_EQUITY_INDEX_EST,
   CRYPTO_24_7,
   US_EQUITIES_EST,
+  describeHalt,
   extendedRanges,
   haltRange,
   localParts,
@@ -61,10 +62,11 @@ export {
   type BarPhase,
   type ExtendedRange,
   type Halt,
+  type HaltKind,
   type SessionCalendar,
   type SessionSegment,
   type SessionWindow,
-} from "./chart/sessions.ts";
+} from "./sessions.ts";
 
 export {
   EMPTY_OVERLAYS,

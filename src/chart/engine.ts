@@ -41,7 +41,7 @@ import {
 import type { Bar } from "./bars.ts";
 import type { ChartBand, ChartMarker, ChartOverlayState, Drawing } from "./drawings.ts";
 import type { Heatmap, VolumeProfile } from "./profile.ts";
-import type { BarPhase } from "./sessions.ts";
+import type { BarPhase } from "../sessions.ts";
 
 /** Everything the chart decorates the axis with, expressed in epoch seconds. */
 export type SessionDecorations = {

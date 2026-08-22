@@ -29,6 +29,7 @@ import {
   reconcileOrder,
   reconcilePositions,
   reconciliationVerdict,
+  surfaceCapabilities,
   surfaceSnapshot,
   type BlotterFill,
   type BlotterOrder,
@@ -278,6 +279,52 @@ describe("an agent is told the same thing, in the same words", () => {
       at: 1,
     });
     expect(s.breaks).toEqual([describeBreak(positionBreak)]);
+  });
+
+  test("STALE STILL CARRIES THE DATA — freeze, do not clear", () => {
+    // The half-a-job shape: greying a button while the bridge still answers
+    // "here is your position" with no caveat. §2.6 step 1 says the opposite of
+    // clearing — the orders ARE still working at the venue, and a blotter that
+    // empties on disconnect shows a trader no position and no stop when both
+    // exist. So the data stays, AND the snapshot says loudly that it may not be
+    // true. Both halves, or neither is worth anything.
+    const s = surfaceSnapshot({
+      surface: "positions",
+      mode: "live",
+      liveness: { state: "stale", reason: "order stream closed" },
+      data: { positions: [{ symbol: "ESU6", qty: "3" }] },
+      at: 1,
+    });
+
+    // The frozen state is still there to read.
+    expect(s.data.positions).toHaveLength(1);
+    // And it is unmistakably marked.
+    expect(s.actionable.allowed).toBe(false);
+    expect(s.livenessSummary).toContain("STALE");
+    expect(s.livenessSummary).toContain("Do not act on it");
+    expect(s.actionable.reason).toContain("order stream closed");
+  });
+
+  test("every MUTATING capability goes unavailable while stale, with the reason", () => {
+    // An agent enumerating what it can do must not be offered a proposal it
+    // should not make. Reads stay available, because freezing state is not the
+    // same as hiding it.
+    const s = surfaceSnapshot({
+      surface: "positions",
+      mode: "live",
+      liveness: { state: "stale", reason: "order stream closed" },
+      data: {},
+      at: 1,
+    });
+    const caps = surfaceCapabilities("positions", s);
+
+    for (const cap of caps.filter((c) => c.requiresApproval)) {
+      expect(cap.available, cap.name).toBe(false);
+      expect(cap.unavailableReason, cap.name).toContain("stale");
+    }
+    for (const cap of caps.filter((c) => !c.requiresApproval)) {
+      expect(cap.available, cap.name).toBe(true);
+    }
   });
 
   test("a clean snapshot carries an empty list, not an absent field", () => {

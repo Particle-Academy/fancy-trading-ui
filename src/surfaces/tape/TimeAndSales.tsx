@@ -26,6 +26,7 @@ import { LIVE, type Liveness, type TradingMode } from "../../safety/mode.ts";
 import { encodeSide, type DirectionPalette } from "../../direction.ts";
 import { formatPrice } from "../../format.ts";
 import type { TicketInstrument } from "../ticket/types.ts";
+import { sessionKey, type SessionCalendar } from "../../sessions.ts";
 
 /** Where the aggressor side came from. Never omitted, never assumed. */
 export type AggressorSource = "venue" | "inferred";
@@ -70,6 +71,12 @@ export type TapeDelta = {
   inferredPrints: number;
   /** How much of the absolute contributing volume was inferred. */
   inferredVolume: string;
+  /**
+   * Which session this delta covers, when a calendar was given. `null` when it
+   * covers everything it was handed — saying "session delta" over an all-time
+   * sum would be the same lie as an approximated profile presented as measured.
+   */
+  session: string | null;
 };
 
 /**
@@ -79,12 +86,32 @@ export type TapeDelta = {
  * from the tick test are not the same number, and a component that renders them
  * identically has thrown away the difference.
  */
-export function cumulativeDelta(prints: readonly TapePrint[], qtyExp: number): TapeDelta {
+export function cumulativeDelta(
+  prints: readonly TapePrint[],
+  qtyExp: number,
+  calendar?: SessionCalendar,
+): TapeDelta {
+  // §2.7 point 6: delta resets per session, and "session" is
+  // instrument-specific. Yesterday's flow has nothing to do with today's, and
+  // carrying it makes today's number unreadable in the way that matters most —
+  // the SIGN can be wrong for a whole session.
+  const session = calendar
+    ? prints.reduce<string | null>((latest, p) => {
+        const key = sessionKey(Math.floor(p.at / 1000), calendar);
+        return latest === null || key > latest ? key : latest;
+      }, null)
+    : null;
+
+  const scoped =
+    calendar && session !== null
+      ? prints.filter((p) => sessionKey(Math.floor(p.at / 1000), calendar) === session)
+      : prints;
+
   let delta = parseDecimal("0", qtyExp);
   let inferredVolume = parseDecimal("0", qtyExp);
   let inferredPrints = 0;
 
-  for (const p of prints) {
+  for (const p of scoped) {
     if (p.aggressor === "unknown") continue;
     const size = parseDecimal(p.size, qtyExp);
     delta = p.aggressor === "buy" ? add(delta, size) : sub(delta, size);
@@ -96,9 +123,10 @@ export function cumulativeDelta(prints: readonly TapePrint[], qtyExp: number): T
 
   return {
     delta: formatDecimal(delta),
-    prints: prints.filter((p) => p.aggressor !== "unknown").length,
+    prints: scoped.filter((p) => p.aggressor !== "unknown").length,
     inferredPrints,
     inferredVolume: formatDecimal(inferredVolume),
+    session,
   };
 }
 
@@ -107,6 +135,12 @@ export type TimeAndSalesProps = {
   instrument: TicketInstrument;
   /** Newest first. */
   prints: readonly TapePrint[];
+  /**
+   * The instrument's session calendar. With one, the cumulative delta covers
+   * the LATEST session only (§2.7 point 6). Without one it sums every print it
+   * is handed, and says so rather than claiming a session it cannot define.
+   */
+  calendar?: SessionCalendar;
   liveness?: Liveness;
   limitations?: readonly Limitation[];
   /** Show the microsecond column. Defaults to on when any print has one. */
@@ -121,6 +155,7 @@ export function TimeAndSales({
   mode,
   instrument,
   prints,
+  calendar,
   liveness = LIVE,
   limitations,
   microseconds,
@@ -130,7 +165,10 @@ export function TimeAndSales({
   id,
 }: TimeAndSalesProps) {
   const rows = prints.slice(0, maxRows);
-  const delta = useMemo(() => cumulativeDelta(rows, instrument.qtyExp), [rows, instrument.qtyExp]);
+  const delta = useMemo(
+    () => cumulativeDelta(rows, instrument.qtyExp, calendar),
+    [rows, instrument.qtyExp, calendar],
+  );
   const showMicros = microseconds ?? rows.some((p) => p.microseconds !== undefined);
 
   const buy = encodeSide("buy", palette);
@@ -153,9 +191,16 @@ export function TimeAndSales({
             color="zinc"
             variant="outline"
             title={
-              delta.inferredPrints > 0
-                ? `${delta.inferredPrints} of ${delta.prints} prints had an INFERRED aggressor side (${delta.inferredVolume} of the volume). This delta is partly a guess.`
-                : `All ${delta.prints} prints had a venue-reported aggressor side.`
+              [
+                delta.session
+                  ? `Session ${delta.session} only — delta resets each session.`
+                  : null,
+                delta.inferredPrints > 0
+                  ? `${delta.inferredPrints} of ${delta.prints} prints had an INFERRED aggressor side (${delta.inferredVolume} of the volume). This delta is partly a guess.`
+                  : `All ${delta.prints} prints had a venue-reported aggressor side.`,
+              ]
+                .filter(Boolean)
+                .join(" ")
             }
           >
             delta {delta.delta}

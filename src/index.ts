@@ -197,5 +197,28 @@ export {
   type AlertsProps,
 } from "./surfaces/alerts/Alerts.tsx";
 
+// ─── Sessions (used by the chart AND the tape) ───────────────────────────────
+export {
+  CME_EQUITY_INDEX_EST,
+  CRYPTO_24_7,
+  US_EQUITIES_EST,
+  describeHalt,
+  extendedRanges,
+  haltRange,
+  localParts,
+  phaseOf,
+  sessionBoundaryIndices,
+  sessionKey,
+  sessionMinutes,
+  sessionSegments,
+  type BarPhase,
+  type ExtendedRange,
+  type Halt,
+  type HaltKind,
+  type SessionCalendar,
+  type SessionSegment,
+  type SessionWindow,
+} from "./sessions.ts";
+
 // ─── Agent bridge contract ───────────────────────────────────────────────────
 export * from "./bridge.ts";

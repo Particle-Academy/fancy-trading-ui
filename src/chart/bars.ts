@@ -16,7 +16,7 @@
  */
 
 import { type Decimal, cmp, parseDecimal, formatDecimal, add } from "@particle-academy/fancy-trading";
-import { sessionKey, type SessionCalendar } from "./sessions.ts";
+import { sessionKey, type SessionCalendar } from "../sessions.ts";
 
 export type Bar = {
   /** Epoch **seconds**, UTC — lightweight-charts' `UTCTimestamp`. */

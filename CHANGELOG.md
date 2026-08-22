@@ -12,6 +12,37 @@ one. Every breaking entry says what you have to DO, not just what moved.
 
 ### Added
 
+- **§2.7 point 6 is wired: the volume profile and the cumulative delta reset per
+  session.** The primitives were correct and nothing called them — a correct
+  primitive nothing calls reads as done, which is worse than absent.
+  - `<TradingChart profileScope>` defaults to `"session"` whenever a `calendar`
+    is given. Yesterday's volume under today's profile drags the point of
+    control toward a level nobody traded today, quietly and cumulatively.
+    `"window"` remains available; what is not available is that behaviour
+    unlabelled, so the badge states which is in force and names the session.
+  - `cumulativeDelta(prints, qtyExp, calendar?)` covers the latest session when
+    given a calendar, and reports which in `session`. Without one it sums
+    everything and does **not** claim a session it cannot define.
+  - The futures boundary is respected throughout: 19:00 ET Monday and 10:00 ET
+    Tuesday are one session, so one profile.
+- **Halts have a vocabulary (§2.7).** `Halt` gains `kind` and an optional
+  `band`, and `describeHalt()` is the one label they render with.
+  - **A LULD Limit State is not a pause.** The market is still trading, capped
+    at the band, for 15 seconds before it resolves or becomes a five-minute
+    pause. Rendering the two identically tells a trader they cannot get out when
+    they can.
+  - `market-wide` says the cause is not this symbol; `maintenance` says
+    scheduled rather than halted, so a futures chart stops looking like it
+    breaks nightly.
+  - **Bands are never computed here.** The LULD reference price is a
+    five-minute rolling mean updated only on a 1%-or-greater move and the
+    percentage doubles in the closing 25 minutes; a host with the feed passes
+    them in, and absent means absent.
+- **Sessions moved out of `chart/`** to the package root and are exported from
+  both entry points. They are a domain concept the tape needs as much as the
+  chart, and burying them under the chart was why the tape had no session to
+  reset on.
+
 - **Reconciliation breaks (§2.6), on the `/safety` entry point.**
   `reconcilePositions()` recomputes positions from this client's own fills and
   compares them with what the venue reports; `reconcileOrder()` compares one

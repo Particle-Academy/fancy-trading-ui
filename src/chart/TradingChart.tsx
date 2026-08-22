@@ -24,9 +24,11 @@ import {
   extendedRanges,
   haltRange,
   sessionBoundaryIndices,
+  describeHalt,
+  sessionKey,
   type Halt,
   type SessionCalendar,
-} from "./sessions.ts";
+} from "../sessions.ts";
 import {
   EMPTY_OVERLAYS,
   type ChartBand,
@@ -116,6 +118,19 @@ export type TradingChartProps = {
   profilePrints?: readonly { price: string; size: string }[];
   approximateProfileFromBars?: boolean;
   profileBucketSize?: string;
+  /**
+   * How much of the series the volume profile covers.
+   *
+   * **`"session"` is the default whenever a `calendar` is given**, because
+   * §2.7 point 6 says the profile resets per session — yesterday's volume under
+   * today's profile drags the point of control toward a level nobody traded
+   * today, quietly and cumulatively.
+   *
+   * `"window"` covers everything windowed onto the chart. It is available
+   * because someone may genuinely want it; what is not available is that
+   * behaviour unlabelled, so the chrome states which is in force either way.
+   */
+  profileScope?: "session" | "window";
   /** Depth-over-time heatmap snapshots — the Bookmap-style liquidity cloud. */
   depthSnapshots?: readonly DepthSnapshot[];
   priceExp?: number;
@@ -196,22 +211,38 @@ export function TradingChart(props: TradingChartProps) {
           from: times[range.fromIndex]!,
           to: times[range.toIndex]!,
           // Never a flat line at the last price: that implies a market trading
-          // flat, when in fact nothing traded at all (§2.7.4).
-          label: halt.reason ? `HALTED — ${halt.reason}` : "HALTED",
+          // flat, when in fact nothing traded at all (§2.7.4). And the WORDS
+          // matter — a Limit State is not a pause.
+          label: describeHalt(halt),
         } satisfies ChartBand;
       })
       .filter((b): b is ChartBand => b !== null);
     return { separators, extended, bands: [...bands, ...haltBands] };
   }, [calendar, times, showExtended, halts, bands]);
 
+  // §2.7 point 6. A profile keyed on nothing is a profile of "whatever happens
+  // to be on screen", which is not a thing a trader can read a level off.
+  const profileScope: "session" | "window" =
+    props.profileScope ?? (calendar ? "session" : "window");
+
+  const profileSession = useMemo<string | null>(() => {
+    if (profileScope !== "session" || !calendar || times.length === 0) return null;
+    return sessionKey(times[times.length - 1]!, calendar);
+  }, [profileScope, calendar, times]);
+
+  const profileBars = useMemo(() => {
+    if (profileSession === null || !calendar) return windowed;
+    return windowed.filter((b) => sessionKey(b.time, calendar) === profileSession);
+  }, [windowed, calendar, profileSession]);
+
   const profile = useMemo<VolumeProfile | null>(() => {
     const bucketSize = profileBucketSize;
     if (!bucketSize) return null;
     const scales = { priceExp, qtyExp, bucketSize };
     if (profilePrints) return volumeProfileFromPrints(profilePrints, scales);
-    if (approximateProfileFromBars) return volumeProfileFromBars(windowed, scales);
+    if (approximateProfileFromBars) return volumeProfileFromBars(profileBars, scales);
     return null;
-  }, [profilePrints, approximateProfileFromBars, profileBucketSize, priceExp, qtyExp, windowed]);
+  }, [profilePrints, approximateProfileFromBars, profileBucketSize, priceExp, qtyExp, profileBars]);
 
   const heatmap = useMemo(
     () =>
@@ -329,11 +360,20 @@ export function TradingChart(props: TradingChartProps) {
           {profile ? (
             <Badge
               data-fancy-trading-chart-profile={profile.approximate ? "approximate" : "measured"}
+              data-profile-scope={profileScope}
+              data-profile-total={profile.total}
+              data-profile-session={profileSession ?? ""}
               size="sm"
               color={profile.approximate ? "amber" : "zinc"}
               variant="outline"
+              title={
+                profileSession
+                  ? `Session ${profileSession} only — the profile resets each session.`
+                  : "Covers the whole windowed range, not one session."
+              }
             >
               profile {profile.approximate ? "approximated" : "measured"}
+              {profileSession ? ` · ${profileSession}` : " · window"}
             </Badge>
           ) : null}
         </span>
@@ -364,6 +404,9 @@ export function TradingChart(props: TradingChartProps) {
         data-fancy-trading-chart={symbol}
         data-attribution-logo={options.attributionLogo ? "on" : "off"}
         data-bars={windowed.length}
+        // The band labels, on the element, because the canvas they are drawn
+        // onto cannot be asserted in jsdom and an untestable label drifts.
+        data-bands={decorations.bands.map((b) => b.label).join(" | ")}
         style={{ height }}
       />
 

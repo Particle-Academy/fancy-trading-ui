@@ -207,12 +207,71 @@ export function sessionBoundaryIndices(
     .map((s) => s.fromIndex);
 }
 
+/**
+ * What kind of interruption this is. Absent means "a halt, cause unstated" —
+ * which is what every caller wrote before this existed and is still valid.
+ *
+ * The distinction that earns the field is `luld-limit-state` versus
+ * `luld-pause`. **A Limit State is not a pause**: the market is still trading,
+ * it simply cannot print outside the band, and it lasts 15 seconds before it
+ * either resolves or becomes a five-minute pause. Rendering the two identically
+ * tells a trader the market stopped when it did not, and that it returns in
+ * five minutes when it may return in fifteen seconds.
+ */
+export type HaltKind =
+  /** LULD Limit State — 15 seconds, still trading, capped at the band. */
+  | "luld-limit-state"
+  /** LULD trading pause — five minutes, nothing trades. */
+  | "luld-pause"
+  /** Market-wide circuit breaker (7% / 13% / 20%). Not about this symbol. */
+  | "market-wide"
+  /** Scheduled: CME's daily break, Kalshi's weekly window. Not an event. */
+  | "maintenance"
+  /** News pending / regulatory. */
+  | "news"
+  | (string & {});
+
 export type Halt = {
   /** Epoch seconds. */
   from: number;
   to: number;
   reason?: string;
+  kind?: HaltKind;
+  /**
+   * The price band in force, when the host knows it.
+   *
+   * **Never computed here.** The LULD reference price is a five-minute rolling
+   * mean updated only on a 1%-or-greater move, the percentage depends on tier
+   * and price band and DOUBLES in the closing 25 minutes, and every input is
+   * market data. Computing it in a UI package would be inventing a number and
+   * printing it beside real ones.
+   */
+  band?: { lower: string; upper: string };
 };
+
+/**
+ * The label a halt renders with — one sentence, and the same one wherever it
+ * appears.
+ */
+export function describeHalt(halt: Halt): string {
+  const band = halt.band ? ` Band ${halt.band.lower}–${halt.band.upper}.` : "";
+  const reason = halt.reason ? ` ${halt.reason}.` : "";
+
+  switch (halt.kind) {
+    case "luld-limit-state":
+      return `LULD LIMIT STATE — still trading, capped at the band; 15 seconds before it resolves or becomes a pause.${band}${reason}`;
+    case "luld-pause":
+      return `HALTED — LULD trading pause, five minutes.${band}${reason}`;
+    case "market-wide":
+      return `HALTED — market-wide circuit breaker. Not specific to this symbol.${reason}`;
+    case "maintenance":
+      return `Scheduled maintenance break — the market is closed, not halted.${reason}`;
+    case "news":
+      return `HALTED — news pending.${reason}`;
+    default:
+      return `HALTED.${reason}`;
+  }
+}
 
 export type ExtendedRange = {
   fromIndex: number;
