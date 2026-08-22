@@ -40,6 +40,36 @@ jobs:
             exit 1
           fi
 
+      # Bootstrap gate. Checked HERE, beside the changelog gate and before
+      # anything is installed or built, for the same reason: a failure that
+      # arrives after five minutes of green steps gets read as a flake.
+      #
+      # OIDC cannot CREATE a package name. Trusted Publishing is configured on a
+      # package's own settings page, so there is nothing to configure until the
+      # name is taken, and npm has no PyPI-style pending publisher. The first
+      # publish of a new name always comes from an authenticated human.
+      #
+      # Without this the run fails at the very last step with
+      # `E404 ... PUT ... Not found`, which reads as "the package does not
+      # exist" -- true, irrelevant, and the reason this has been misdiagnosed
+      # repeatedly. Confirmed again on fancy-trading-ui, 2026-08-22: every gate
+      # passed and only Publish failed.
+      - name: The package name exists on the registry
+        run: |
+          NAME="$(node -p "require('./package.json').name")"
+          if npm view "$NAME" version > /dev/null 2>&1; then
+            echo "$NAME is on the registry — Trusted Publishing takes it from here."
+            exit 0
+          fi
+          echo "::error::$NAME does not exist on npm, and THIS WORKFLOW CANNOT CREATE IT."
+          echo "::error::OIDC publishes to an existing name; it cannot claim a new one, and npm has no pending-publisher equivalent."
+          echo "::error::The account owner must bootstrap it once, from a laptop, in one sitting (npm login is a 2-hour session):"
+          echo "::error::  npm login --auth-type=web && npm whoami"
+          echo "::error::  npm version 0.0.0 --no-git-tag-version && npm publish --tag bootstrap --access public && npm version <real> --no-git-tag-version"
+          echo "::error::Then add the Trusted Publisher at https://www.npmjs.com/package/$NAME/access (GitHub Actions / Particle-Academy / <repo> / publish.yml / no environment), delete this tag and re-push it."
+          echo "::error::Full protocol: .ai/knowledge/publishing.md, 'Bootstrapping a brand-new package'."
+          exit 1
+
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
