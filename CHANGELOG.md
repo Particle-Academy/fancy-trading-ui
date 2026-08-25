@@ -10,6 +10,19 @@ one. Every breaking entry says what you have to DO, not just what moved.
 
 ## [Unreleased]
 
+## [0.1.0] — 2026-08-25
+
+FIRST RELEASE, and it is dated the day it actually shipped.
+
+The notes below were written on 2026-08-21 and the tag was never cut; four
+days of further work then accumulated under `[Unreleased]` above them. The
+tag cut today contains BOTH, so both are here. An entry dated before the
+release it describes, with later work filed as unreleased above it, is how a
+consumer reads a changelog that does not match the tarball they installed.
+
+First release. Trading surfaces for the Fancy UI suite, built on the domain core
+in [`@particle-academy/fancy-trading`](https://www.npmjs.com/package/@particle-academy/fancy-trading).
+
 ### Added
 
 - **§2.7 point 6 is wired: the volume profile and the cumulative delta reset per
@@ -73,11 +86,6 @@ one. Every breaking entry says what you have to DO, not just what moved.
   `-ticket-blocked` were all accepted silently and dropped silently. The handles
   now sit on a wrapper, and a scanner fails the build on the next one.
   **Filed against `react-fancy`**, since every other primitive forwards.
-
-## [0.1.0] — 2026-08-21
-
-First release. Trading surfaces for the Fancy UI suite, built on the domain core
-in [`@particle-academy/fancy-trading`](https://www.npmjs.com/package/@particle-academy/fancy-trading).
 
 ### Added
 
