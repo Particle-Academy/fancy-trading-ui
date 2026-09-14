@@ -1,5 +1,7 @@
 # @particle-academy/fancy-trading-ui
 
+[![Fancified](art/fancified.svg)](https://particle.academy)
+
 Trading surfaces for the [Fancy UI suite](https://ui.particle.academy) — order
 ticket, price ladder / DOM, order book, depth, time & sales, blotter, positions,
 watchlist, alerts, and a session-aware trading chart.
