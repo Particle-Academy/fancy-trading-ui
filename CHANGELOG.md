@@ -12,6 +12,8 @@ one. Every breaking entry says what you have to DO, not just what moved.
 
 ### Security
 
+- Update Vitest to 4.1.12 and patch the transitive undici development dependency for security fixes; dev toolchain only, nothing to do.
+
 - `source-map-js` is pinned forward to `^1.2.2` via `overrides`. Versions up to
   1.2.1 allow an event-loop denial of service through indexed source-map section
   offsets, and it arrives here transitively through the build toolchain.
