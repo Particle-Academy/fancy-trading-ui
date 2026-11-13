@@ -44,15 +44,19 @@ const TONE: Record<Direction, DirectionEncoding["tone"]> = {
   flat: "neutral",
 };
 
+// Darker light-mode shades: the 600s are 3.2–4.8:1 on white and lower on an
+// off-white page, under AA for the small text these paint (axe color-contrast).
+// Green needs 800: 700 is exactly 4.50:1 on zinc-100, too close to call.
+// tests/direction-contrast.test.ts measures every light shade used here.
 const COLOURS: Record<DirectionPalette, Record<Direction, string>> = {
   "red-green": {
-    up: "text-green-600 dark:text-green-400",
-    down: "text-red-600 dark:text-red-400",
+    up: "text-green-800 dark:text-green-400",
+    down: "text-red-700 dark:text-red-400",
     flat: "text-secondary-500",
   },
   "blue-orange": {
-    up: "text-sky-600 dark:text-sky-400",
-    down: "text-orange-600 dark:text-orange-400",
+    up: "text-sky-700 dark:text-sky-400",
+    down: "text-orange-700 dark:text-orange-400",
     flat: "text-secondary-500",
   },
   monochrome: { up: "", down: "", flat: "" },

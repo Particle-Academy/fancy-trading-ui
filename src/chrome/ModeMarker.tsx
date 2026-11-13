@@ -43,9 +43,11 @@ function forcedStyles(color: string, background: string): Record<string, string>
     color,
     "background-color": background,
     "font-size": "0.6875rem",
-    "line-height": "1rem",
+    // NOT line-height or letter-spacing: those are WCAG 1.4.12 text-spacing
+    // properties a reader must be able to override, and neither can hide the
+    // marker. They come from the className below instead (axe
+    // avoid-inline-spacing).
     "font-weight": "700",
-    "letter-spacing": "0.06em",
     "font-family": "inherit",
     padding: "0.0625rem 0.375rem",
     "border-radius": "0.25rem",
@@ -111,7 +113,7 @@ export function ModeMarker({ mode }: ModeMarkerProps) {
       data-fancy-trading-mode={mode}
       // A fallback for the first paint before the ref runs. The forced inline
       // styles are the guarantee; these classes are only politeness.
-      className="inline-flex items-center rounded px-1.5 py-px text-[0.6875rem] font-bold tracking-wider"
+      className="inline-flex items-center rounded px-1.5 py-px text-[0.6875rem] leading-4 font-bold tracking-[0.06em]"
       title={TITLE[mode]}
     >
       {modeLabel(mode)}

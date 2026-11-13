@@ -95,6 +95,25 @@ describe("the simulation marker cannot be styled away", () => {
     h.unmount();
   });
 
+  test("text spacing is NOT forced, so a reader's spacing override still applies", () => {
+    // WCAG 1.4.12: a reader must be able to raise letter, word and line
+    // spacing. Inline !important letter-spacing / line-height defeats that
+    // (axe avoid-inline-spacing, serious, lab run 601, K35), and neither one
+    // can hide the marker, so forcing them guarded nothing.
+    const h = render(
+      <SurfaceChrome surface="ticket" mode="sim">
+        <p>ticket</p>
+      </SurfaceChrome>,
+    );
+    const marker = h.find("[data-fancy-trading-mode='sim']")!;
+    for (const prop of ["letter-spacing", "word-spacing", "line-height"]) {
+      expect(marker.style.getPropertyPriority(prop)).not.toBe("important");
+    }
+    // ...while the visibility guarantees are untouched.
+    expect(marker.style.getPropertyPriority("font-size")).toBe("important");
+    h.unmount();
+  });
+
   test("a consumer className reaches the wrapper and NOT the marker", () => {
     const h = render(
       <SurfaceChrome surface="ticket" mode="sim" className="hidden opacity-0">

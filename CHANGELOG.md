@@ -17,6 +17,22 @@ one. Every breaking entry says what you have to DO, not just what moved.
   when the fancy-labs lab has certified that exact version and commit. Consumers
   do nothing; this changes how releases are cut, not what the package does.
 
+### Fixed
+
+- **Direction colours are readable on light surfaces** (axe `color-contrast`,
+  serious, lab run 601, K35). Up values were `text-green-600`, 3.22:1 on white,
+  on the order book, depth chart, time and sales, watch list, ladder,
+  positions and orders. Light-mode shades are now `green-800` / `red-700` for
+  red-green and `sky-700` / `orange-700` for blue-orange, each at least 4.5:1
+  on white, an off-white page and `zinc-100`; dark mode is unchanged. Glyph
+  and label still carry direction, as before. Nothing to do on upgrade.
+- **The mode marker no longer forces text spacing** (axe
+  `avoid-inline-spacing`, serious). `letter-spacing` and `line-height` were
+  inline `!important`, which stops a reader's WCAG 1.4.12 spacing override, and
+  neither could hide the marker. They now come from the marker's classes. The
+  visibility guarantees (display, visibility, opacity, colour, background,
+  font size and the rest) are still forced. Nothing to do on upgrade.
+
 ### Security
 
 - Update Vitest to 4.1.12 and patch the transitive undici development dependency for security fixes; dev toolchain only, nothing to do.
