@@ -16,6 +16,13 @@ bridgeable** and carries the safety floor described below.
 
 ---
 
+<!-- fancy-agents-note:start -->
+> **For agents.** This package is listed on the Fancy MCP catalog server at
+> `https://ui.particle.academy/mcp` (streamable HTTP, no API key; MCP id `fancy-ui`),
+> with install commands and docs, alongside the rest of the kit. How an agent
+> installs and uses this package is in [AGENTS.md](https://github.com/Particle-Academy/fancy-trading-ui/blob/main/AGENTS.md).
+<!-- fancy-agents-note:end -->
+
 ## What installing this actually costs you
 
 Worth stating plainly, because the chart lives in this package:
