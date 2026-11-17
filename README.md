@@ -280,19 +280,30 @@ and a profile keyed on the calendar date is wrong every evening.
 
 ## Human+ / agent bridges
 
-The MCP bridges live in `@particle-academy/agent-integrations` with the suite's
-other twenty-one. What lives here is the contract they adapt to:
+**No MCP bridge for these surfaces ships yet**, here or in
+`@particle-academy/agent-integrations`. When one is written it belongs in
+agent-integrations with the suite's other bridges. What ships here today is the
+contract such a bridge would adapt to, plus the helpers that build it:
 
 ```ts
-import { surfaceSnapshot, surfaceCapabilities, proposeAction } from "@particle-academy/fancy-trading-ui";
+import {
+  surfaceSnapshot,
+  surfaceCapabilities,
+  proposeAction,
+  type TradingSurfaceAdapter,
+} from "@particle-academy/fancy-trading-ui";
 ```
 
-- `readState()` returns mode, liveness, the human-facing liveness sentence, and
-  every limitation — never a bare boolean.
-- `capabilities()` lets an agent ask *what can I do from here*, with
+- `TradingSurfaceAdapter` is an **interface**: `readState()`, `capabilities()`,
+  `propose()` and `recent()`. No surface implements it yet; an adapter you write
+  (or a future bridge) does.
+- `surfaceSnapshot()` builds the snapshot `readState()` should return: mode,
+  liveness, the human-facing liveness sentence, and every limitation, never a
+  bare boolean.
+- `surfaceCapabilities()` answers *what can I do from here*, with
   `requiresApproval` and `available` per tool. Reads are always available;
   mutations always require approval.
-- `propose()` returns a proposal. There is no `execute`.
+- `proposeAction()` returns a proposal. There is no `execute`.
 
 Every mutation broadcasts an `AutoActivityEvent`, so presence, undo and coaching
 compose for free. `@particle-academy/fancy-auto-common` is an optional peer and

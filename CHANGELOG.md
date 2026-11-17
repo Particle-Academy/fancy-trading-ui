@@ -15,6 +15,10 @@ one. Every breaking entry says what you have to DO, not just what moved.
 - Rebranded the display name to Fancy Dev Kit (README and package description). Package names, the npm scope, URLs and the `fancy-ui` MCP id are unchanged.
 - **Docs:** `AGENTS.md` added: the guide to using this package (install, its entries on the Fancy MCP catalog server, API essentials, traps), and it ships in the package. `CONTRIBUTING.md` added for the contributor notes, with `CLAUDE.md` as a symlink to it. The README points to the MCP server and to `AGENTS.md`. No code changed; nothing to do.
 
+### Fixed
+
+- **Docs:** the README said MCP bridges for these surfaces live in `agent-integrations` and described `readState()` as if a surface provided it. No trading bridge exists anywhere yet, and `readState()` is a method of the `TradingSurfaceAdapter` interface that nothing implements. The section now says so, and names what does ship: the interface and the `surfaceSnapshot` / `surfaceCapabilities` / `proposeAction` helpers. Docs only; nothing to do.
+
 ## [0.1.1] — 2026-11-13
 
 ### Changed
